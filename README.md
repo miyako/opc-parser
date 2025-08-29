@@ -1,3 +1,7 @@
+![platform](https://img.shields.io/static/v1?label=platform&message=mac-intel%20|%20mac-arm%20|%20win-64&color=blue)
+[![license](https://img.shields.io/github/license/miyako/opc-parser)](LICENSE)
+![downloads](https://img.shields.io/github/downloads/miyako/opc-parser/total)
+
 # opc-parser
 CLI tool to extract text from OOXML
 
