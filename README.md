@@ -11,6 +11,13 @@ opc-parser -i example.docx -o example.json
  - : use stdin for input
 ```
 
+## specification
+
+|type|page|paragraph|run|
+|-|-|:-:|:-:|
+|pptx|`slide%d.xml`|`p`|`t` or `a:t`|
+
+
 ## output (JSON)
 
 ```
@@ -28,3 +35,4 @@ opc-parser -i example.docx -o example.json
 **xlsx**: each row is a paragraph. cell values are joined by space ` `.  
 
 **TODO**: handle `<w:sectPr>` in docx. 
+
