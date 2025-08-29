@@ -1,6 +1,7 @@
 #ifndef __OPC_PARSER_H__
 #define __OPC_PARSER_H__
 
+#define LIBXML_STATIC
 #include <opc/opc.h>
 #include <json/json.h>
 #include <sstream>
