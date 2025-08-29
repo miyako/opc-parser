@@ -22,10 +22,10 @@ extern OPTARG_T optarg;
 extern int optind, opterr, optopt;
 
 #ifndef __GNUC__
-optarg = 0;
-opterr = 1;
-optind = 1;
-optopt = 0;
+//optarg = 0;
+//opterr = 1;
+//optind = 1;
+//optopt = 0;
 int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
 
     static int sp = 1;
@@ -68,6 +68,9 @@ int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
     }
     return(c);
 }
+#define ARGS (OPTARG_T)L"i:o:-rh"
+#else
+#define ARGS "i:o:-rh"
 #endif
 
 static void extract_text_nodes(xmlNode *node, std::string& text) {
@@ -385,7 +388,7 @@ int main(int argc, OPTARG_T argv[]) {
     std::string text;
     bool rawText = false;
     
-    while ((ch = getopt(argc, argv, "i:o:-rh")) != -1){
+    while ((ch = getopt(argc, argv, ARGS)) != -1){
         switch (ch){
             case 'i':
                 input_path  = optarg;
