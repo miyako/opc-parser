@@ -9,12 +9,12 @@
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage:  opc-parser -i in -o out -\n\n");
+    fprintf(stderr, "Usage:  opc-parser -r -i in -o out -\n\n");
     fprintf(stderr, "text extractor for ooxml documents\n\n");
     fprintf(stderr, " -%c path: %s\n", 'i' , "document to parse");
     fprintf(stderr, " -%c path: %s\n", 'o' , "text output (default=stdout)");
-    fprintf(stderr, " %c : %s\n", '-' , "use stdin for input");
-    
+    fprintf(stderr, " %c: %s\n", '-' , "use stdin for input");
+    fprintf(stderr, " -%c: %s\n", 'r' , "raw text output (default=json)");
     exit(1);
 }
 
@@ -106,31 +106,46 @@ struct Document {
     std::vector<Page> pages;
 };
 
-static void document_to_json(Document& document, std::string& text) {
+static void document_to_json(Document& document, std::string& text, bool rawText) {
     
-    Json::Value documentNode(Json::objectValue);
-    documentNode["type"] = document.type;
-    documentNode["pages"] = Json::arrayValue;
-    
-    for (const auto &page : document.pages) {
-        Json::Value pageNode(Json::objectValue);
-        Json::Value paragraphsNode(Json::arrayValue);
-        
-        for (const auto &paragraph : page.paragraphs) {
-            std::string _text;
-            for (const auto &run : paragraph.runs) {
-                _text += run.text;
-            }
-            if(_text.length() != 0){
-                paragraphsNode.append(_text);
+    if(rawText){
+        text = "";
+        for (const auto &page : document.pages) {
+            for (const auto &paragraph : page.paragraphs) {
+                std::string _text;
+                for (const auto &run : paragraph.runs) {
+                    _text += run.text;
+                }
+                if(_text.length() != 0){
+                    text += _text;
+                }
             }
         }
-        pageNode["paragraphs"] = paragraphsNode;
-        documentNode["pages"].append(pageNode);
+    }else{
+        Json::Value documentNode(Json::objectValue);
+        documentNode["type"] = document.type;
+        documentNode["pages"] = Json::arrayValue;
+        
+        for (const auto &page : document.pages) {
+            Json::Value pageNode(Json::objectValue);
+            Json::Value paragraphsNode(Json::arrayValue);
+            
+            for (const auto &paragraph : page.paragraphs) {
+                std::string _text;
+                for (const auto &run : paragraph.runs) {
+                    _text += run.text;
+                }
+                if(_text.length() != 0){
+                    paragraphsNode.append(_text);
+                }
+            }
+            pageNode["paragraphs"] = paragraphsNode;
+            documentNode["pages"].append(pageNode);
+        }
+        Json::StreamWriterBuilder writer;
+        writer["indentation"] = "";
+        text = Json::writeString(writer, documentNode);
     }
-    Json::StreamWriterBuilder writer;
-    writer["indentation"] = "";
-    text = Json::writeString(writer, documentNode);
 }
 
 static std::string node_text(xmlNodePtr node) {
@@ -243,7 +258,7 @@ static void process_worksheet(xmlNode *node, Document& document,const char *tag,
                         std::string cell_value = resolve_cell_value(cell, sst);
                         if(cell_value.length() != 0) {
                             if(value.length() != 0) {
-                                value += " ";
+                                value += "\t";
                             }
                             value += cell_value;
                         }
@@ -275,14 +290,32 @@ static void process_document(xmlNode *node, Document& document,const char *tag, 
                     xmlChar* type_attr = xmlGetProp(cur, (const xmlChar*)"type");
                     if (type_attr) {
                         if (!xmlStrcmp(type_attr, (const xmlChar *)"page")) {
-//                            std::vector<char>buf(1024);
-//                            snprintf(buf.data(), buf.size(), "page%d", (int)document.pages.size() + 1);
                             Page _page;
-//                            _page.name = buf.data();
                             document.pages.push_back(_page);
                             page = &document.pages.back();
                         }
                         xmlFree(type_attr);
+                    }
+                }
+                if (!xmlStrcmp(cur->name, (const xmlChar *)"pPr")) {
+                    xmlNodePtr pPr = cur;
+                    for(xmlNodePtr sp = pPr->children; sp; sp = sp->next) {
+                        if(!xmlStrcmp(sp->name,(const xmlChar*)"sectPr")) {
+                            for(xmlNodePtr t = sp->children; t; t = t->next){
+                                if(!xmlStrcmp(t->name,(const xmlChar*)"type")){
+                                    xmlNodePtr typeNode = t;
+                                    xmlChar* val = xmlGetProp(typeNode, (const xmlChar*)"val");
+                                    if(val){
+                                        if(!xmlStrcmp(val,(const xmlChar*)"nextPage")){
+                                            Page _page;
+                                            document.pages.push_back(_page);
+                                            page = &document.pages.back();
+                                        }
+                                        xmlFree(val);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -350,8 +383,9 @@ int main(int argc, char * argv[]) {
 
     int ch;
     std::string text;
+    bool rawText = false;
     
-    while ((ch = getopt(argc, argv, "i:o:-h")) != -1){
+    while ((ch = getopt(argc, argv, "i:o:-rh")) != -1){
         switch (ch){
             case 'i':
                 input_path  = optarg;
@@ -367,6 +401,9 @@ int main(int argc, char * argv[]) {
                 docx_data.resize(len);
                 fread(docx_data.data(), 1, docx_data.size(), stdin);
             }
+                break;
+            case 'r':
+                rawText = true;
                 break;
             case 'h':
             default:
@@ -388,8 +425,7 @@ int main(int argc, char * argv[]) {
     }
     
     if(!docx_data.size()) {
-        std::cerr << "no input!" << std::endl;
-        return 1;
+        usage();
     }
     
     opcContainer *container = opcContainerOpenMem(_X(docx_data.data()), (opc_uint32_t)docx_data.size(), OPC_OPEN_READ_ONLY, NULL);
@@ -433,10 +469,9 @@ int main(int argc, char * argv[]) {
                     xmlNode *doc_root = xmlDocGetRootElement(xml_doc);
                     if(doc_root) {
                         Page _page;
-//                        _page.name = "page1";
                         document.pages.push_back(_page);
                         process_document(doc_root, document, "p", type);
-                        document_to_json(document, text);
+                        document_to_json(document, text, rawText);
                         xmlFreeDoc(xml_doc);
                     }
                 }
@@ -478,7 +513,6 @@ int main(int argc, char * argv[]) {
                             xmlNode *slide_root = xmlDocGetRootElement(xml_slide);
                             if(slide_root) {
                                 Page _page;
-//                                _page.name = slideName;
                                 document.pages.push_back(_page);
                                 process_worksheet(slide_root, document, "row", sst);
                             }
@@ -486,7 +520,7 @@ int main(int argc, char * argv[]) {
                         }
                     }
                 } while (slide);
-                document_to_json(document, text);
+                document_to_json(document, text, rawText);
             }
                 break;
             case document_type_pptx:
@@ -505,7 +539,6 @@ int main(int argc, char * argv[]) {
                             xmlNode *slide_root = xmlDocGetRootElement(xml_slide);
                             if(slide_root) {
                                 Page _page;
-//                                _page.name = slideName;
                                 document.pages.push_back(_page);
                                 process_document(slide_root, document, "p", type);
                             }
@@ -513,7 +546,7 @@ int main(int argc, char * argv[]) {
                         }
                     }
                 } while (slide);
-                document_to_json(document, text);
+                document_to_json(document, text, rawText);
             }
                 break;
             default:
