@@ -8,7 +8,8 @@ opc-parser -i example.docx -o example.json
 
  -i path: document to parse
  -o path: text output (default=stdout)
- - : use stdin for input
+ -: use stdin for input
+ -r: raw text output (default=json)
 ```
 
 ## specification
