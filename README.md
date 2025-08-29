@@ -13,7 +13,7 @@ opc-parser -i example.docx -o example.json
 
 ## output (JSON)
 
-```json
+```
 {
     "type: "docx" | "xlsx" | "pptx",
     "pages": [
