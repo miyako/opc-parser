@@ -18,8 +18,8 @@ static void usage(void)
     exit(1);
 }
 
-extern OPTARG_T optarg;
-extern int optind, opterr, optopt;
+extern OPTARG_T optarg = 0;
+extern int optind = 1, opterr = 1, optopt = 0;
 
 #ifndef __GNUC__
 //optarg = 0;
