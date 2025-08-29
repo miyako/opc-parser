@@ -22,7 +22,7 @@ opc-parser -i example.docx -o example.json
 |-|-|:-:|-|
 |docx|`br` where `type=page` or `sectPr/type` where `val=nextPage`|`p`|`t` or `a:t`
 |xlsx|`sheet%d.xml`|`row`|`c/v` where `@t=s\|str\|b\|e\|n` or `c/is/t` where `@t=inlineStr`|
-|pptx|`slide%d.xml`|`p`|`t` or `a:t` cells are join by `\t`|
+|pptx|`slide%d.xml`|`p`|`t` or `a:t` cells are joined by `\t`|
 
 
 ## output (JSON)
