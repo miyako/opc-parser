@@ -11,11 +11,20 @@ opc-parser -i example.docx -o example.json
  - : use stdin for input
 ```
 
-"" output (JSON)
+## output (JSON)
 
-* type: docx, xlsx, pptx
-* pages[]
-* pages[].index 
-* pages[].paragraphs[]
+```json
+{
+    "type: "docx" | "xlsx" | "pptx",
+    "pages": [
+        {
+            "paragraphs": [{array of string}]
+        }
+    ]
+}
+```
+
+**docx**: only an explicit `<br type="page">` starts a new page. it many not be the physical page number.  
+**xlsx**: each row is a paragraph. cell values are joined by space ` `.  
 
 
