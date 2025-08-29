@@ -15,6 +15,7 @@ opc-parser -i example.docx -o example.json
 
 |type|page|paragraph|run|
 |-|-|:-:|:-:|
+|xlsx|`sheet%d.xml`|`row`|`c/v` where `@t=s\|str\|b\|e\|n` or `c/is/t` where `@t=inlineStr`|
 |pptx|`slide%d.xml`|`p`|`t` or `a:t`|
 
 
