@@ -1,2 +1,4 @@
 .build/Intermediates/*
 opc-parser.xcodeproj/xcshareddata/xcschemes/opc-parser.xcscheme
+.vs/*
+opc-parser/x64/*

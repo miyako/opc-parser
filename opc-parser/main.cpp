@@ -341,7 +341,7 @@ static xmlDoc *parse_opc_part(opcContainer *container, opcPart part) {
     return NULL;
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, OPTARG_T argv[]) {
     
     const OPTARG_T input_path  = NULL;
     const OPTARG_T output_path = NULL;
