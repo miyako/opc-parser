@@ -27,4 +27,4 @@ opc-parser -i example.docx -o example.json
 **docx**: only an explicit `<br type="page">` starts a new page. it many not be the physical page number.  
 **xlsx**: each row is a paragraph. cell values are joined by space ` `.  
 
-
+**TODO**: handle `<w:sectPr>` in docx. 
