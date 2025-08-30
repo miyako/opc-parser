@@ -44,6 +44,6 @@ opc-parser -i example.docx -o example.json
 
 ### about word tables 
 
-piped tables (markdown) can't be nested. they also don't support merged cell spans. there are no good ways to represent even the basic structure of a word table in markdown.
+piped tables (markdown) can't be nested. they also don't support merged cell spans. there are no reliable ways to represent even the basic structure of a word table in markdown.
 
 note that the parser reads up tables cells in order of appearance. this means the text is read row by row, cell by cell. a cell may contain one or more paragraphs.
