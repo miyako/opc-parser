@@ -42,6 +42,8 @@ opc-parser -i example.docx -o example.json
 
 **docx**: footnotes.xml, endnotes.xml, comments.xml
 
+**all**: decrypt c.f. https://github.com/miyako/4d-plugin-msoffice-crypt
+
 ### about word tables 
 
 piped tables (markdown) can't be nested. they also don't support merged cell spans. there are no reliable ways to represent even the basic structure of a word table in markdown.
