@@ -15,7 +15,7 @@ static void usage(void)
     fprintf(stderr, " -%c path  : %s\n", 'o' , "text output (default=stdout)");
     fprintf(stderr, " %c        : %s\n", '-' , "use stdin for input");
     fprintf(stderr, " -%c       : %s\n", 'r' , "raw text output (default=json)");
-    fprintf(stderr, " -%c       : %s\n", 'p' , "pass");
+    fprintf(stderr, " -%c pass  : %s\n", 'p' , "password");
     exit(1);
 }
 
