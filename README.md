@@ -41,8 +41,6 @@ opc-parser -i example.docx -o example.json
 
 ## TODO
 
-**docx**: footnotes.xml, endnotes.xml, comments.xml
-
 ### about word tables 
 
 piped tables (markdown) can't be nested. they also don't support merged cell spans. there are no reliable ways to represent even the basic structure of a word table in markdown.
