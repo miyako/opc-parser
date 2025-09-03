@@ -10,10 +10,11 @@ CLI tool to extract text from OOXML
 ```
 opc-parser -i example.docx -o example.json
 
- -i path: document to parse
- -o path: text output (default=stdout)
- -: use stdin for input
- -r: raw text output (default=json)
+-i path  : document to parse
+-o path  : text output (default=stdout)
+-        : use stdin for input
+-r       : raw text output (default=json)
+-p pass  : password
 ```
 
 ## specification
@@ -41,8 +42,6 @@ opc-parser -i example.docx -o example.json
 ## TODO
 
 **docx**: footnotes.xml, endnotes.xml, comments.xml
-
-**all**: decrypt c.f. https://github.com/miyako/4d-plugin-msoffice-crypt
 
 ### about word tables 
 

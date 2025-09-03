@@ -11,21 +11,22 @@ static void usage(void)
 {
     fprintf(stderr, "Usage:  opc-parser -r -i in -o out -\n\n");
     fprintf(stderr, "text extractor for ooxml documents\n\n");
-    fprintf(stderr, " -%c path: %s\n", 'i' , "document to parse");
-    fprintf(stderr, " -%c path: %s\n", 'o' , "text output (default=stdout)");
-    fprintf(stderr, " %c: %s\n", '-' , "use stdin for input");
-    fprintf(stderr, " -%c: %s\n", 'r' , "raw text output (default=json)");
+    fprintf(stderr, " -%c path  : %s\n", 'i' , "document to parse");
+    fprintf(stderr, " -%c path  : %s\n", 'o' , "text output (default=stdout)");
+    fprintf(stderr, " %c        : %s\n", '-' , "use stdin for input");
+    fprintf(stderr, " -%c       : %s\n", 'r' , "raw text output (default=json)");
+    fprintf(stderr, " -%c pass  : %s\n", 'p' , "password");
     exit(1);
 }
 
 extern OPTARG_T optarg;
 extern int optind, opterr, optopt;
 
-#ifdef WIN32
-optarg = 0;
-opterr = 1;
-optind = 1;
-optopt = 0;
+#ifdef _WIN32
+OPTARG_T optarg = 0;
+int opterr = 1;
+int optind = 1;
+int optopt = 0;
 int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
 
     static int sp = 1;
@@ -68,9 +69,9 @@ int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
     }
     return(c);
 }
-#define ARGS (OPTARG_T)L"i:o:-rh"
+#define ARGS (OPTARG_T)L"i:o:-rhp:"
 #else
-#define ARGS "i:o:-rh"
+#define ARGS "i:o:-rhp:"
 #endif
 
 static void extract_text_nodes(xmlNode *node, std::string& text) {
@@ -377,6 +378,46 @@ static xmlDoc *parse_opc_part(opcContainer *container, opcPart part) {
     return NULL;
 }
 
+#ifdef _WIN32
+static std::string wchar_to_utf8(const wchar_t* wstr) {
+    if (!wstr) return std::string();
+
+    // Get required buffer size in bytes
+    int size_needed = WideCharToMultiByte(
+        CP_UTF8,            // convert to UTF-8
+        0,                  // default flags
+        wstr,               // source wide string
+        -1,                 // null-terminated
+        nullptr, 0,         // no output buffer yet
+        nullptr, nullptr
+    );
+
+    if (size_needed <= 0) return std::string();
+
+    // Allocate buffer
+    std::string utf8str(size_needed, 0);
+
+    // Perform conversion
+    WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        wstr,
+        -1,
+        &utf8str[0],
+        size_needed,
+        nullptr,
+        nullptr
+    );
+
+    // Remove the extra null terminator added by WideCharToMultiByte
+    if (!utf8str.empty() && utf8str.back() == '\0') {
+        utf8str.pop_back();
+    }
+
+    return utf8str;
+}
+#endif
+
 int main(int argc, OPTARG_T argv[]) {
     
     const OPTARG_T input_path  = NULL;
@@ -387,6 +428,7 @@ int main(int argc, OPTARG_T argv[]) {
     int ch;
     std::string text;
     bool rawText = false;
+    OPTARG_T password = NULL;
     
     while ((ch = getopt(argc, argv, ARGS)) != -1){
         switch (ch){
@@ -395,6 +437,9 @@ int main(int argc, OPTARG_T argv[]) {
                 break;
             case 'o':
                 output_path = optarg;
+                break;
+            case 'p':
+                password = optarg;
                 break;
             case '-':
             {
@@ -429,6 +474,59 @@ int main(int argc, OPTARG_T argv[]) {
     
     if(!docx_data.size()) {
         usage();
+    }
+    
+    std::string pw;
+#ifdef _WIN32
+    pw = wchar_to_utf8(password);
+#else
+    pw = password ? password : "";
+#endif
+    
+    if(pw.length()) {
+
+        ms::Format format;
+        try {
+            format = ms::DetectFormat((const char *)docx_data.data(),
+                                      (size_t)docx_data.size());
+        } catch (std::exception& e) {
+            format = ms::fUnknown;
+        }
+        if (format != ms::fZip) {
+            
+            cybozu::String16 wpass;
+            std::string passData;
+            if (cybozu::ConvertUtf8ToUtf16(&wpass, pw)) {
+                passData = ms::Char16toChar8(wpass);
+            }
+            
+            std::string decData;
+            std::string secretKey;
+            ms::cfb::CompoundFile cfb((const char *)docx_data.data(), (uint32_t)docx_data.size());
+            cfb.put();
+
+            const std::string& encryptedPackage = ms::GetContensByName(cfb, "EncryptedPackage"); // data
+            const ms::EncryptionInfo info(ms::GetContensByName(cfb, "EncryptionInfo")); // xml
+            info.put();
+
+            bool decoded = false;
+            if (info.isStandardEncryption) {
+                decoded = ms::decodeStandardEncryption(decData,
+                                                       encryptedPackage,
+                                                       info, passData, secretKey);
+            } else {
+                decoded = ms::decodeAgile(decData,
+                                          encryptedPackage,
+                                          info, passData, secretKey);
+            }
+            
+            if (decoded) {
+                docx_data.assign(decData.begin(), decData.end());
+            }else{
+                std::cerr << "incorrect password!" << std::endl;
+                return 1;
+            }
+        }
     }
     
     opcContainer *container = opcContainerOpenMem(_X(docx_data.data()), (opc_uint32_t)docx_data.size(), OPC_OPEN_READ_ONLY, NULL);

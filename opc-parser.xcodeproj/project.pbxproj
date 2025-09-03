@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D10C5CA32E68949A00D120DE /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D10C5CA22E68949A00D120DE /* libcrypto.a */; };
 		D157F3122E612DD500DF46D3 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D157F30C2E612DD500DF46D3 /* libjsoncpp.a */; };
 		D157F3132E612DD500DF46D3 /* libopc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D157F30D2E612DD500DF46D3 /* libopc.a */; };
 		D157F3142E612DD500DF46D3 /* libplib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D157F30E2E612DD500DF46D3 /* libplib.a */; };
@@ -29,6 +30,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D10C5CA22E68949A00D120DE /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = a/libcrypto.a; sourceTree = "<group>"; };
 		D157F30C2E612DD500DF46D3 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = a/libjsoncpp.a; sourceTree = "<group>"; };
 		D157F30D2E612DD500DF46D3 /* libopc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopc.a; path = a/libopc.a; sourceTree = "<group>"; };
 		D157F30E2E612DD500DF46D3 /* libplib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libplib.a; path = a/libplib.a; sourceTree = "<group>"; };
@@ -43,6 +45,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D16478962E611F7700FC9914 /* opc-parser */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+				main.cpp = sourcecode.cpp.cpp;
+			};
 			path = "opc-parser";
 			sourceTree = "<group>";
 		};
@@ -53,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D10C5CA32E68949A00D120DE /* libcrypto.a in Frameworks */,
 				D157F31C2E613ACD00DF46D3 /* libz.tbd in Frameworks */,
 				D157F3122E612DD500DF46D3 /* libjsoncpp.a in Frameworks */,
 				D157F3132E612DD500DF46D3 /* libopc.a in Frameworks */,
@@ -69,6 +75,7 @@
 		D157F30B2E612DD500DF46D3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D10C5CA22E68949A00D120DE /* libcrypto.a */,
 				D157F31B2E613ACD00DF46D3 /* libz.tbd */,
 				D157F3112E612DD500DF46D3 /* libiconv.a */,
 				D157F30C2E612DD500DF46D3 /* libjsoncpp.a */,
@@ -207,7 +214,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -271,7 +278,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -292,7 +299,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D164789E2E61216B00FC9914 /* opc-config.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = x86_64;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = Y69CWUC25B;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -310,7 +317,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D164789E2E61216B00FC9914 /* opc-config.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = x86_64;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = Y69CWUC25B;
 				ENABLE_HARDENED_RUNTIME = YES;
