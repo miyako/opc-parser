@@ -5,7 +5,7 @@
 //  Created by miyako on 2025/08/29.
 //
 
-#include "opc-parser.hpp"
+#include "opc-parser.h"
 
 static void usage(void)
 {
@@ -22,11 +22,11 @@ static void usage(void)
 extern OPTARG_T optarg;
 extern int optind, opterr, optopt;
 
-#ifdef WIN32
-optarg = 0;
-opterr = 1;
-optind = 1;
-optopt = 0;
+#ifdef _WIN32
+OPTARG_T optarg = 0;
+int opterr = 1;
+int optind = 1;
+int optopt = 0;
 int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
 
     static int sp = 1;
@@ -378,7 +378,7 @@ static xmlDoc *parse_opc_part(opcContainer *container, opcPart part) {
     return NULL;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 static std::string wchar_to_utf8(const wchar_t* wstr) {
     if (!wstr) return std::string();
 
@@ -477,7 +477,7 @@ int main(int argc, OPTARG_T argv[]) {
     }
     
     std::string pw;
-#ifdef WIN32
+#ifdef _WIN32
     pw = wchar_to_utf8(password);
 #else
     pw = password ? password : "";
