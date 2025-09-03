@@ -18,14 +18,14 @@ static void usage(void)
     exit(1);
 }
 
-extern OPTARG_T optarg = 0;
-extern int optind = 1, opterr = 1, optopt = 0;
+extern OPTARG_T optarg;
+extern int optind, opterr, optopt;
 
-#ifndef __GNUC__
-//optarg = 0;
-//opterr = 1;
-//optind = 1;
-//optopt = 0;
+#ifdef WIN32
+optarg = 0;
+opterr = 1;
+optind = 1;
+optopt = 0;
 int getopt(int argc, OPTARG_T *argv, OPTARG_T opts) {
 
     static int sp = 1;
