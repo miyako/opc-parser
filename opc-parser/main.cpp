@@ -5,17 +5,17 @@
 //  Created by miyako on 2025/08/29.
 //
 
-#include "opc-parser.h"
+#include "opc-parser.hpp"
 
 static void usage(void)
 {
     fprintf(stderr, "Usage:  opc-parser -r -i in -o out -\n\n");
     fprintf(stderr, "text extractor for ooxml documents\n\n");
-    fprintf(stderr, " -%c path: %s\n", 'i' , "document to parse");
-    fprintf(stderr, " -%c path: %s\n", 'o' , "text output (default=stdout)");
-    fprintf(stderr, " %c: %s\n", '-' , "use stdin for input");
-    fprintf(stderr, " -%c: %s\n", 'r' , "raw text output (default=json)");
-    fprintf(stderr, " -%c: %s\n", 'p' , "password");
+    fprintf(stderr, " -%c path  : %s\n", 'i' , "document to parse");
+    fprintf(stderr, " -%c path  : %s\n", 'o' , "text output (default=stdout)");
+    fprintf(stderr, " %c        : %s\n", '-' , "use stdin for input");
+    fprintf(stderr, " -%c       : %s\n", 'r' , "raw text output (default=json)");
+    fprintf(stderr, " -%c       : %s\n", 'p' , "pass");
     exit(1);
 }
 
@@ -483,6 +483,51 @@ int main(int argc, OPTARG_T argv[]) {
     pw = password ? password : "";
 #endif
     
+    if(pw.length()) {
+
+        ms::Format format;
+        try {
+            format = ms::DetectFormat((const char *)docx_data.data(),
+                                      (size_t)docx_data.size());
+        } catch (std::exception& e) {
+            format = ms::fUnknown;
+        }
+        if (format != ms::fZip) {
+            
+            cybozu::String16 wpass;
+            std::string passData;
+            if (cybozu::ConvertUtf8ToUtf16(&wpass, pw)) {
+                passData = ms::Char16toChar8(wpass);
+            }
+            
+            std::string decData;
+            std::string secretKey;
+            ms::cfb::CompoundFile cfb((const char *)docx_data.data(), (uint32_t)docx_data.size());
+            cfb.put();
+
+            const std::string& encryptedPackage = ms::GetContensByName(cfb, "EncryptedPackage"); // data
+            const ms::EncryptionInfo info(ms::GetContensByName(cfb, "EncryptionInfo")); // xml
+            info.put();
+
+            bool decoded = false;
+            if (info.isStandardEncryption) {
+                decoded = ms::decodeStandardEncryption(decData,
+                                                       encryptedPackage,
+                                                       info, passData, secretKey);
+            } else {
+                decoded = ms::decodeAgile(decData,
+                                          encryptedPackage,
+                                          info, passData, secretKey);
+            }
+            
+            if (decoded) {
+                docx_data.assign(decData.begin(), decData.end());
+            }else{
+                std::cerr << "incorrect password!" << std::endl;
+                return 1;
+            }
+        }
+    }
     
     opcContainer *container = opcContainerOpenMem(_X(docx_data.data()), (opc_uint32_t)docx_data.size(), OPC_OPEN_READ_ONLY, NULL);
     

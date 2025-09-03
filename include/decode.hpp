@@ -113,6 +113,7 @@ inline bool getAgileSecretKey(std::string& secretKey, const EncryptionInfo& info
 inline bool decodeAgile(std::string& decData, const std::string& encryptedPackage, const EncryptionInfo& info, const std::string& pass, std::string& secretKey)
 {
 	const CipherParam& keyData = info.keyData;
+	const CipherParam& encryptedKey = info.encryptedKey;
 	if (secretKey.empty()) {
 		if (!getAgileSecretKey(secretKey, info, pass)) return false;
 		if (putSecretKeyInstance()) {
@@ -129,8 +130,8 @@ inline bool decodeAgile(std::string& decData, const std::string& encryptedPackag
 	const uint64_t decodeSize = GetEncodedData(encData, encryptedPackage);
 
 	// decode
-	normalizeKey(secretKey, keyData.keyBits / 8);
-	DecContent(decData, encData, keyData, secretKey, keyData.saltValue);
+	normalizeKey(secretKey, encryptedKey.keyBits / 8);
+	DecContent(decData, encData, encryptedKey, secretKey, keyData.saltValue);
 	decData.resize(size_t(decodeSize));
 	return true;
 }
@@ -187,7 +188,9 @@ inline bool decodeStandardEncryption(std::string& dec, const std::string& encryp
 	secretKey will be set if it is empty
 */
 template<class String>
-bool decode(const char *data, uint32_t dataSize, const String& outFile, const std::string& pass, std::string& secretKey, bool doView, int *pSpinCount = 0)
+bool decode(const char *data, 
+	uint32_t dataSize, 
+	String& outFile, std::string& outData, const std::string& pass, std::string& secretKey, bool doView, int *pSpinCount = 0)
 {
 	ms::cfb::CompoundFile cfb(data, dataSize);
 	cfb.put();
@@ -207,9 +210,10 @@ bool decode(const char *data, uint32_t dataSize, const String& outFile, const st
 	}
 	if (!doView) {
 		DetectFormat(decData.c_str(), decData.size());
-		cybozu::File out;
-		out.openW(outFile);
-		out.write(decData.c_str(), decData.size());
+		outData = decData;
+//		cybozu::File out;
+//		out.openW(outFile);
+//		out.write(decData.c_str(), decData.size());
 	}
 	return true;
 }

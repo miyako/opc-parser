@@ -197,7 +197,7 @@ inline bool encode_in(
 }
 
 template<class String>
-bool encode(const char *data, uint32_t dataSize, const String& outFile, const std::string& pass, bool isOffice2013, const std::string& masterKey, int spinCount)
+bool encode(const char *data, uint32_t dataSize, String& outFile, std::string& encData, const std::string& pass, bool isOffice2013, const std::string& masterKey, int spinCount)
 {
 	std::string encryptedPackage;
 	ms::EncryptionInfo info;
@@ -211,9 +211,10 @@ bool encode(const char *data, uint32_t dataSize, const String& outFile, const st
 	std::string outData;
 	makeLayout(outData, cfb);
 	{
-		cybozu::File out;
-		out.openW(outFile);
-		out.write(outData.c_str(), outData.size());
+        encData = outData;
+//		cybozu::File out;
+//		out.openW(outFile);
+//		out.write(outData.c_str(), outData.size());
 	}
 	return true;
 }

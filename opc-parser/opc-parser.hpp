@@ -1,6 +1,21 @@
 #ifndef __OPC_PARSER_H__
 #define __OPC_PARSER_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <locale>
+#include <fstream>
+
+#include "cfb.hpp"
+#include "decode.hpp"
+#include "encode.hpp"
+#include "make_dataspace.hpp"
+#include <cybozu/mmap.hpp>
+#include <cybozu/file.hpp>
+#include <cybozu/atoi.hpp>
+#include <cybozu/option.hpp>
+
 #include <opc/opc.h>
 #include <json/json.h>
 #include <sstream>
