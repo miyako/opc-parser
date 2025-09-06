@@ -5,7 +5,7 @@
 ### Dependencies and Licensing
 
 * the source code of this CLI tool is licensed under the MIT license.
-* see [libopc](https://github.com/freuter/libopc/blob/master/LICENSE) for the licensing of **libopc** (OPC).
+* see [libopc](https://github.com/freuter/libopc/blob/master/LICENSE) for the licensing of **libopc** (BSD).
  
 # opc-parser
 CLI tool to extract text from OOXML
