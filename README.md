@@ -2,6 +2,11 @@
 [![license](https://img.shields.io/github/license/miyako/opc-parser)](LICENSE)
 ![downloads](https://img.shields.io/github/downloads/miyako/opc-parser/total)
 
+### Dependencies and Licensing
+
+* the source code of this CLI tool is licensed under the MIT license.
+* see [libopc](https://github.com/freuter/libopc/blob/master/LICENSE) for the licensing of **libopc** (OPC).
+ 
 # opc-parser
 CLI tool to extract text from OOXML
 
