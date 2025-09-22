@@ -443,11 +443,12 @@ int main(int argc, OPTARG_T argv[]) {
                 break;
             case '-':
             {
-                _fseek(stdin, 0, SEEK_END);
-                opc_uint32_t len = (opc_uint32_t)_ftell(stdin);
-                _fseek(stdin, 0, SEEK_SET);
-                docx_data.resize(len);
-                fread(docx_data.data(), 1, docx_data.size(), stdin);
+                std::vector<uint8_t> buf(BUFLEN);
+                size_t n;
+                
+                while ((n = fread(buf.data(), 1, buf.size(), stdin)) > 0) {
+                    docx_data.insert(docx_data.end(), buf.begin(), buf.begin() + n);
+                }
             }
                 break;
             case 'r':

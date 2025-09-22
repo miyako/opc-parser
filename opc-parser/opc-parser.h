@@ -30,7 +30,7 @@
 #include <sstream>
 #include <iostream>
 
-#define BUFLEN 1024
+#define BUFLEN 4096
 
 #ifdef __GNUC__
 #define _fopen fopen
