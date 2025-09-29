@@ -296,7 +296,6 @@ static void process_document(xmlNode *node, Document& document,const char *tag, 
                         if (!xmlStrcmp(type_attr, (const xmlChar *)"page")) {
                             Page _page;
                             document.pages.push_back(_page);
-                            page = &document.pages.back();
                         }
                         xmlFree(type_attr);
                     }
@@ -313,7 +312,6 @@ static void process_document(xmlNode *node, Document& document,const char *tag, 
                                         if(!xmlStrcmp(val,(const xmlChar*)"nextPage")){
                                             Page _page;
                                             document.pages.push_back(_page);
-                                            page = &document.pages.back();
                                         }
                                         xmlFree(val);
                                     }
@@ -325,6 +323,7 @@ static void process_document(xmlNode *node, Document& document,const char *tag, 
             }
 
             if (!xmlStrcmp(cur->name, (const xmlChar *)tag)) {
+                page = &document.pages.back();
                 Paragraph _paragraph;
                 page->paragraphs.push_back(_paragraph);
             }
