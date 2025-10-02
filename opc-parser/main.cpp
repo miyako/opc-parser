@@ -143,7 +143,7 @@ static void document_to_json_ss(Workbook& document, std::string& text, bool rawT
                 
                 if(_text.length() != 0){
                     if(multiline) {
-                        _text += "\n";
+                        text += "\n";
                     }
                     text += _text;
                     multiline = true;
