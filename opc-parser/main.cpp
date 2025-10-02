@@ -110,6 +110,71 @@ struct Document {
     std::vector<Page> pages;
 };
 
+struct Row {
+    std::vector<std::string> cells;
+};
+
+struct Sheet {
+    std::string name;
+    std::vector<Row> rows;
+};
+
+struct Workbook {
+    std::string type;
+    std::vector<Sheet> sheets;
+};
+
+static void document_to_json_ss(Workbook& document, std::string& text, bool rawText) {
+    
+    if(rawText){
+        text = "";
+        for (const auto &sheet : document.sheets) {
+            bool multiline = false;
+            for (const auto &row : sheet.rows) {
+                std::string _text;
+                bool continued = false;
+                for (const auto &cell : row.cells) {
+                    if(continued) {
+                        _text += ",";
+                    }
+                    _text += cell;
+                    continued = true;
+                }
+                
+                if(_text.length() != 0){
+                    if(multiline) {
+                        _text += "\n";
+                    }
+                    text += _text;
+                    multiline = true;
+                }
+            }
+        }
+    }else{
+        Json::Value documentNode(Json::objectValue);
+        documentNode["type"] = document.type;
+        documentNode["sheets"] = Json::arrayValue;
+        
+        for (const auto &sheet : document.sheets) {
+            Json::Value sheetNode(Json::objectValue);
+            sheetNode["name"] = sheet.name;
+            sheetNode["rows"] = Json::arrayValue;
+            for (const auto &row : sheet.rows) {
+                Json::Value cellsNode(Json::arrayValue);
+                for (const auto &cell : row.cells) {
+                    cellsNode.append(cell);
+                }
+                sheetNode["rows"].append(cellsNode);
+            }
+            documentNode["sheets"].append(sheetNode);
+        }
+        
+        Json::StreamWriterBuilder writer;
+        writer["indentation"] = "";
+        text = Json::writeString(writer, documentNode);
+    }
+}
+
 static void document_to_json(Document& document, std::string& text, bool rawText) {
     
     if(rawText){
@@ -234,9 +299,9 @@ static std::string resolve_cell_value(xmlNodePtr c_node, const std::vector<std::
     return vtext;
 }
 
-static void process_worksheet(xmlNode *node, Document& document,const char *tag, const std::vector<std::string>& sst) {
+static void process_worksheet(xmlNode *node, Workbook& document,const char *tag, const std::vector<std::string>& sst) {
     
-    Page *page = &document.pages.back();
+    Sheet *sheet = &document.sheets.back();
     
     xmlNodePtr sheetData = nullptr;
     // find sheetData anywhere under root (namespaces don't matter for local names)
@@ -254,28 +319,14 @@ static void process_worksheet(xmlNode *node, Document& document,const char *tag,
         for (xmlNodePtr row = sheetData->children; row; row = row->next) {
             if(row->type == XML_ELEMENT_NODE){
                 if (!xmlStrcmp(row->name, (const xmlChar *)tag)) {
-                    Paragraph _paragraph;
-                    page->paragraphs.push_back(_paragraph);
+                    Row _row;
                     std::string value;
                     for (xmlNodePtr cell = row->children; cell; cell = cell->next) {
                         if (cell->type != XML_ELEMENT_NODE || strcmp((const char*)cell->name, "c") != 0) continue;
                         std::string cell_value = resolve_cell_value(cell, sst);
-                        if(cell_value.length() != 0) {
-                            if(value.length() != 0) {
-                                value += "\t";
-                            }
-                            value += cell_value;
-                        }
+                        _row.cells.push_back(cell_value);
                     }
-                    if(value.length() != 0) {
-                        if(!page->paragraphs.size()) {
-                            //should not happen
-                            Paragraph _paragraph;
-                            page->paragraphs.push_back(_paragraph);
-                        }
-                        Paragraph *paragraph = &page->paragraphs.back();
-                        paragraph->runs.push_back(Run{value});
-                    }
+                    sheet->rows.push_back(_row);
                 }
             }
         }
@@ -537,6 +588,8 @@ int main(int argc, OPTARG_T argv[]) {
     }
     
     Document document;
+    Workbook workbook;
+    
     document_type type = document_type_unknown;
     opcPart part = OPC_PART_INVALID;
     
@@ -548,7 +601,7 @@ int main(int argc, OPTARG_T argv[]) {
     }
     part = opcPartFind(container, _X("/xl/workbook.xml"), NULL, 0);
     if(part) {
-        document.type = "xlsx";
+        workbook.type = "xlsx";
         type = document_type_xlsx;
         goto reader;
     }
@@ -600,6 +653,47 @@ int main(int argc, OPTARG_T argv[]) {
                     }
                 }
                     
+                xmlDoc *workbookDoc = parse_opc_part(container, part);
+                if (workbookDoc) {
+                    xmlNode *root = xmlDocGetRootElement(workbookDoc);
+                    if (root) {
+                        for (xmlNode *node = root->children; node; node = node->next) {
+                            if (node->type == XML_ELEMENT_NODE && xmlStrcmp(node->name, BAD_CAST "sheets") == 0) {
+                                for (xmlNode *sheetNode = node->children; sheetNode; sheetNode = sheetNode->next) {
+                                    if (sheetNode->type == XML_ELEMENT_NODE && xmlStrcmp(sheetNode->name, BAD_CAST "sheet") == 0) {
+                                        std::string sheetName;
+                                        xmlChar *nameAttr = xmlGetProp(sheetNode, BAD_CAST "name");
+                                        if (nameAttr) {
+                                            sheetName = (reinterpret_cast<char *>(nameAttr));
+                                            xmlFree(nameAttr);
+                                        }
+                                        xmlChar *idAttr = xmlGetProp(sheetNode, BAD_CAST "id");
+                                        if (idAttr) {
+                                            opcRelation target = opcRelationFind(container, part, idAttr, _X("http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"));
+                                            xmlFree(idAttr);
+                                            opcPart sheet = opcRelationGetInternalTarget(container, part, target);
+                                            if(sheet){
+                                                xmlDoc *xml_sheet = parse_opc_part(container, sheet);
+                                                if(xml_sheet) {
+                                                    xmlNode *slide_root = xmlDocGetRootElement(xml_sheet);
+                                                    if(slide_root) {
+                                                        Sheet sheet;
+                                                        sheet.name = sheetName;
+                                                        workbook.sheets.push_back(sheet);
+                                                        process_worksheet(slide_root, workbook, "row", sst);
+                                                    }
+                                                    xmlFreeDoc(xml_sheet);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                /*
                 int i = 0;
                 opcPart slide = NULL;
                 do {
@@ -613,15 +707,16 @@ int main(int argc, OPTARG_T argv[]) {
                         if(xml_slide) {
                             xmlNode *slide_root = xmlDocGetRootElement(xml_slide);
                             if(slide_root) {
-                                Page _page;
-                                document.pages.push_back(_page);
-                                process_worksheet(slide_root, document, "row", sst);
+                                Sheet sheet;
+                                workbook.sheets.push_back(sheet);
+                                process_worksheet(slide_root, workbook, "row", sst);
                             }
                             xmlFreeDoc(xml_slide);
                         }
                     }
                 } while (slide);
-                document_to_json(document, text, rawText);
+                */
+                document_to_json_ss(workbook, text, rawText);
             }
                 break;
             case document_type_pptx:
