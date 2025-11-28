@@ -10,36 +10,44 @@
 # opc-parser
 CLI tool to extract text from OOXML
 
-## usage
-
 ```
-opc-parser -i example.docx -o example.json
+text extractor for ooxml documents
 
--i path  : document to parse
--o path  : text output (default=stdout)
--        : use stdin for input
--r       : raw text output (default=json)
--p pass  : password
+ -i path  : document to parse
+ -o path  : text output (default=stdout)
+ -        : use stdin for input
+ -r       : raw text output (default=json)
+ -p pass  : password
 ```
+## JSON (XLSX)
 
-## specification
+|Property|Level|Type|Description|
+|-|-|-|-|
+|document|0|||
+|document.type|0|Text||
+|document.pages|0|Array|=sheets|
+|document.pages[].meta|1| Object ||
+|document.pages[].meta.name|1| Text |sheet name|
+|document.pages[].paragraphs|1|Array|=rows|
+|document.pages[].paragraphs[].values|2|Array|=cells|
+|document.pages[].paragraphs[].text|2|Text|JSON representation of .values|
 
-|type|page|paragraph|run|
-|-|-|:-:|-|
-|docx|`br` where `type=page` or `sectPr/type` where `val=nextPage`|`p`|`t` or `a:t`
-|xlsx|`sheet%d.xml`|`row`|`c/v` where `@t=s\|str\|b\|e\|n` or `c/is/t` where `@t=inlineStr`|
-|pptx|`slide%d.xml`|`p`|`t` or `a:t` cells are joined by `\t`|
+## JSON (PPTX)
 
+|Property|Level|Type|Description|
+|-|-|-|-|
+|document|0|||
+|document.type|0|Text||
+|document.pages|0|Array|=slides|
+|document.pages[].paragraphs|1|Array||
+|document.pages[].paragraphs[].text|2|Text||
 
-## output (JSON)
+## JSON (DOCX)
 
-```
-{
-    "type: "docx" | "xlsx" | "pptx",
-    "pages": [
-        {
-            "paragraphs": [{array of string}]
-        }
-    ]
-}
-```
+|Property|Level|Type|Description|
+|-|-|-|-|
+|document|0|||
+|document.type|0|Text||
+|document.pages|0|Array||
+|document.pages[].paragraphs|1|Array||
+|document.pages[].paragraphs[].text|2|Text||
