@@ -32,13 +32,22 @@ text extractor for ooxml documents
 |document.pages[].paragraphs[].values|2|Array|=cells|
 |document.pages[].paragraphs[].text|2|Text|JSON representation of .values|
 
-## JSON (PPTX, DOCX)
+## JSON (PPTX)
 
 |Property|Level|Type|Description|
 |-|-|-|-|
 |document|0|||
 |document.type|0|Text||
-|document.pages|0|Array|=sheets|
-|document.pages[].paragraphs|1|Array|=rows|
-|document.pages[].paragraphs[].values|2|Array|=cells|
-|document.pages[].paragraphs[].text|2|Text|JSON representation of .values|
+|document.pages|0|Array|=slides|
+|document.pages[].paragraphs|1|Array||
+|document.pages[].paragraphs[].text|2|Text||
+
+## JSON (DOCX)
+
+|Property|Level|Type|Description|
+|-|-|-|-|
+|document|0|||
+|document.type|0|Text||
+|document.pages|0|Array||
+|document.pages[].paragraphs|1|Array||
+|document.pages[].paragraphs[].text|2|Text||
