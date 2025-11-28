@@ -151,26 +151,33 @@ static void document_to_json_ss(Workbook& document, std::string& text, bool rawT
             }
         }
     }else{
+        Json::StreamWriterBuilder writer;
+        writer["indentation"] = "";
         Json::Value documentNode(Json::objectValue);
         documentNode["type"] = document.type;
-        documentNode["sheets"] = Json::arrayValue;
+        documentNode["pages"] = Json::arrayValue;
         
         for (const auto &sheet : document.sheets) {
             Json::Value sheetNode(Json::objectValue);
-            sheetNode["name"] = sheet.name;
-            sheetNode["rows"] = Json::arrayValue;
+            Json::Value sheetMetaNode(Json::objectValue);
+            sheetMetaNode["name"] = sheet.name;
+            sheetNode["meta"] = sheetMetaNode;
+            sheetNode["paragraphs"] = Json::arrayValue;
+            
             for (const auto &row : sheet.rows) {
+                Json::Value paragraphNode(Json::objectValue);
+                paragraphNode["values"] = Json::arrayValue;
                 Json::Value cellsNode(Json::arrayValue);
                 for (const auto &cell : row.cells) {
-                    cellsNode.append(cell);
+                    paragraphNode["values"].append(cell);
                 }
-                sheetNode["rows"].append(cellsNode);
+                
+                std::string values = Json::writeString(writer, paragraphNode["values"]);
+                paragraphNode["text"] = values;
+                sheetNode["paragraphs"].append(paragraphNode);
             }
-            documentNode["sheets"].append(sheetNode);
+            documentNode["pages"].append(sheetNode);
         }
-        
-        Json::StreamWriterBuilder writer;
-        writer["indentation"] = "";
         text = Json::writeString(writer, documentNode);
     }
 }
@@ -191,28 +198,30 @@ static void document_to_json(Document& document, std::string& text, bool rawText
             }
         }
     }else{
+        Json::StreamWriterBuilder writer;
+        writer["indentation"] = "";
         Json::Value documentNode(Json::objectValue);
         documentNode["type"] = document.type;
         documentNode["pages"] = Json::arrayValue;
         
         for (const auto &page : document.pages) {
             Json::Value pageNode(Json::objectValue);
-            Json::Value paragraphsNode(Json::arrayValue);
+//            Json::Value paragraphsNode(Json::arrayValue);
+            pageNode["paragraphs"] = Json::arrayValue;
             
             for (const auto &paragraph : page.paragraphs) {
+                Json::Value paragraphNode(Json::objectValue);
                 std::string _text;
                 for (const auto &run : paragraph.runs) {
                     _text += run.text;
                 }
                 if(_text.length() != 0){
-                    paragraphsNode.append(_text);
+                    paragraphNode["text"] = _text;
+                    pageNode["paragraphs"].append(paragraphNode);
                 }
             }
-            pageNode["paragraphs"] = paragraphsNode;
             documentNode["pages"].append(pageNode);
         }
-        Json::StreamWriterBuilder writer;
-        writer["indentation"] = "";
         text = Json::writeString(writer, documentNode);
     }
 }
