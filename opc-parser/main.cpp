@@ -206,7 +206,6 @@ static void document_to_json(Document& document, std::string& text, bool rawText
         
         for (const auto &page : document.pages) {
             Json::Value pageNode(Json::objectValue);
-//            Json::Value paragraphsNode(Json::arrayValue);
             pageNode["paragraphs"] = Json::arrayValue;
             
             for (const auto &paragraph : page.paragraphs) {
