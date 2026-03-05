@@ -7,6 +7,51 @@
 
 #include "opc-parser.h"
 
+// The ZIP magic number: 50 4B 03 04
+const std::array<opc_uint8_t, 4> ZIP_MAGIC = {0x50, 0x4B, 0x03, 0x04};
+
+// Maximum bytes to scan for the magic number
+const size_t MAX_SCAN_OFFSET = 512;
+
+static bool sanitize_docx_buffer(std::vector<opc_uint8_t>& docx_data) {
+    
+    // 1. Check the buffer size (must be at least 4 bytes to contain the magic number)
+    if (docx_data.size() < ZIP_MAGIC.size()) {
+        return false;
+    }
+
+    // Determine the safe upper bound for our search.
+    // We allow the magic number to START anywhere up to MAX_SCAN_OFFSET.
+    size_t search_end_idx = std::min(docx_data.size(), MAX_SCAN_OFFSET + ZIP_MAGIC.size());
+    auto search_end_iter = docx_data.begin() + search_end_idx;
+
+    // 2 & 4. Check magic number / scan the first 512 bytes
+    auto it = std::search(
+        docx_data.begin(),
+        search_end_iter,
+        ZIP_MAGIC.begin(),
+        ZIP_MAGIC.end()
+    );
+
+    // If the iterator reached our search boundary, the magic number wasn't found
+    if (it == search_end_iter) {
+        return false;
+    }
+
+    // 3 & 5. If found at the very beginning, skip. Otherwise, remove padding.
+    if (it != docx_data.begin()) {
+        // Calculate how many bytes of garbage we are removing (for logging purposes)
+        size_t padding_size = std::distance(docx_data.begin(), it);
+        std::cout << "Found " << padding_size << " bytes of padding. Removing...\n";
+        
+        // Remove data up to before the magic number
+        docx_data.erase(docx_data.begin(), it);
+    }
+
+    // Buffer is now guaranteed to start with 50 4B 03 04
+    return true;
+}
+
 static void usage(void)
 {
     fprintf(stderr, "Usage:  opc-parser -r -i in -o out -\n\n");
@@ -587,20 +632,25 @@ int main(int argc, OPTARG_T argv[]) {
             }
         }
     }
-    
-    opcContainer *container = opcContainerOpenMem(_X(docx_data.data()), (opc_uint32_t)docx_data.size(), OPC_OPEN_READ_ONLY, NULL);
-    
-    if(!container){
-        std::cerr << "not a valid input!" << std::endl;
-        return 1;
-    }
-    
+
+    document_type type = document_type_unknown;
     Document document;
     Workbook workbook;
-    
-    document_type type = document_type_unknown;
     opcPart part = OPC_PART_INVALID;
+    opcContainer *container = NULL;
     
+    if(!sanitize_docx_buffer(docx_data)) {
+        std::cerr << "not a valid input!" << std::endl;
+        goto unfortunately;
+    }
+    
+    container = opcContainerOpenMem(_X(docx_data.data()), (opc_uint32_t)docx_data.size(), OPC_OPEN_READ_ONLY, NULL);
+    
+    if(!container) {
+        std::cerr << "not a valid input!" << std::endl;
+        goto unfortunately;
+    }
+        
     part = opcPartFind(container, _X("/word/document.xml"), NULL, 0);
     if(part) {
         document.type = "docx";
@@ -759,7 +809,15 @@ int main(int argc, OPTARG_T argv[]) {
     }
     
     opcContainerClose(container, OPC_CLOSE_NOW);
+
+    goto finally;
     
+unfortunately:
+    
+    text = "{\"type\": \"unknown\"}";
+    
+finally:
+       
     if(!output_path) {
         std::cout << text << std::endl;
     }else{
