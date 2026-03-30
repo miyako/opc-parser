@@ -30,8 +30,9 @@ text extractor for ooxml documents
 |document.pages[].meta.name|1| Text |sheet name|
 |document.pages[].paragraphs|1|Array|=rows|
 |document.pages[].paragraphs[].values|2|Array|=cells|
+|document.pages[].paragraphs[].text|2|Text||
 
-* XLSX has no `text` property. Use `values` if necessary.
+* `text` is a join of `values` using space as delimiter. It is intended for display purposes only.
 
 ## JSON (PPTX)
 
