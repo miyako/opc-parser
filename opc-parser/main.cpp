@@ -179,20 +179,21 @@ static void document_to_json_ss(Workbook& document, std::string& text, bool rawT
                 std::string _text;
                 bool continued = false;
                 for (const auto &cell : row.cells) {
+                    if(cell.empty())
+                        continue;
                     if(continued) {
                         _text += ",";
                     }
                     _text += cell;
                     continued = true;
                 }
-                
-                if(_text.length() != 0){
-                    if(multiline) {
-                        text += "\n";
-                    }
-                    text += _text;
-                    multiline = true;
+                if(_text.empty())
+                    continue;
+                if(multiline) {
+                    text += "\n";
                 }
+                text += _text;
+                multiline = true;
             }
         }
     }else{
@@ -208,17 +209,25 @@ static void document_to_json_ss(Workbook& document, std::string& text, bool rawT
             sheetMetaNode["name"] = sheet.name;
             sheetNode["meta"] = sheetMetaNode;
             sheetNode["paragraphs"] = Json::arrayValue;
-            
+            int rowIdx = 0; // physical sheet row index, increments regardless of empty rows
             for (const auto &row : sheet.rows) {
                 Json::Value paragraphNode(Json::objectValue);
                 paragraphNode["values"] = Json::arrayValue;
-                Json::Value cellsNode(Json::arrayValue);
+                paragraphNode["row"] = rowIdx++;
+                bool emptyRow = true;
+                std::string joined;
                 for (const auto &cell : row.cells) {
+                    if(cell.empty())
+                        continue;
                     paragraphNode["values"].append(cell);
+                    if (!joined.empty()) joined += " ";
+                    joined += cell;
+                    emptyRow = false;
                 }
-                
-                std::string values = Json::writeString(writer, paragraphNode["values"]);
-                paragraphNode["text"] = values;
+                if(emptyRow) {
+                    continue;
+                }
+                paragraphNode["text"] = joined;
                 sheetNode["paragraphs"].append(paragraphNode);
             }
             documentNode["pages"].append(sheetNode);
